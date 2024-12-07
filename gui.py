@@ -26,21 +26,21 @@ class Gui:
         ###########################################################################################
         # Layout
         ###########################################################################################
-        frame_left  = ttk.Frame(self.root,padding=3.)
-        frame_right = ttk.Frame(self.root,padding=3.)
-        frame_left.grid(row=0, column=0, sticky=tkinter.N)
-        frame_right.grid(row=0, column=1, sticky=tkinter.N)
+        frame_left  = ttk.Frame(self.root, padding=3.)
+        frame_right = ttk.Frame(self.root, padding=3.)
+        frame_left.grid(  row=0, column=0, sticky=tkinter.N)
+        frame_right.grid( row=0, column=1, sticky=tkinter.N)
         
-        self.frame_dialog_excel = ttk.Frame(frame_left, padding=5.)
-        self.frame_thrust_curve = ttk.Frame(frame_left, padding=5.)
-        self.frame_result       = ttk.Frame(frame_left, padding=5.)
-        self.frame_launch_site  = ttk.Frame(frame_left, padding=5.)
+        self.frame_dialog_excel = ttk.Frame(frame_left,  padding=5.)
+        self.frame_thrust_curve = ttk.Frame(frame_left,  padding=5.)
+        self.frame_result       = ttk.Frame(frame_left,  padding=5.)
+        self.frame_launch_site  = ttk.Frame(frame_left,  padding=5.)
         self.frame_wind         = ttk.Frame(frame_right, padding=5.)
-        self.frame_dialog_excel.grid(row=0, column=0, sticky=tkinter.N)
-        self.frame_thrust_curve.grid(row=1, column=0, sticky=tkinter.N)
-        self.frame_result.grid(row=2, column=0, sticky=tkinter.N)
-        self.frame_launch_site.grid(row=3, column=0, sticky=tkinter.N+tkinter.W)
-        self.frame_wind.grid(row=0)
+        self.frame_dialog_excel.grid( row=0, column=0, sticky=tkinter.N)
+        self.frame_thrust_curve.grid( row=1, column=0, sticky=tkinter.N)
+        self.frame_result.grid(       row=2, column=0, sticky=tkinter.N)
+        self.frame_launch_site.grid(  row=3, column=0, sticky=tkinter.N+tkinter.W)
+        self.frame_wind.grid(         row=0)
 
         ###########################################################################################
         # Variables
@@ -99,7 +99,7 @@ class Gui:
     def set_frame_wind(self):
 
         azimuth_list = np.arange(4, 68, 4, dtype=int).tolist()
-        speed_list = np.arange(1, 21, 1, dtype=int).tolist()
+        speed_list   = np.arange(1, 21, 1, dtype=int).tolist()
 
         # Wind Model
         self.var_exist_wind_file    = tkinter.BooleanVar(value=False)
@@ -108,11 +108,11 @@ class Gui:
         self.var_pow_speed   = tkinter.DoubleVar(value=3.0)
         self.var_pow_azimuth = tkinter.DoubleVar(value=0.0)
         # Multi Condition
-        self.var_num_azimuth  = tkinter.IntVar(value=azimuth_list[2])
-        self.var_num_speed    = tkinter.IntVar(value=speed_list[6])
-        self.var_min_speed    = tkinter.DoubleVar(value=1.0)
-        self.var_step_speed   = tkinter.DoubleVar(value=1.0)
-        self.var_base_azimuth = tkinter.DoubleVar(value=0.0)
+        self.var_num_azimuth  = tkinter.IntVar(    value=azimuth_list[2])
+        self.var_num_speed    = tkinter.IntVar(    value=speed_list[6])
+        self.var_min_speed    = tkinter.DoubleVar( value=1.0)
+        self.var_step_speed   = tkinter.DoubleVar( value=1.0)
+        self.var_base_azimuth = tkinter.DoubleVar( value=0.0)
         
         # Wind Model
         add_label(self.frame_wind, text='Select Wind Model', row=0, columnspan=2)
@@ -180,15 +180,15 @@ class Gui:
         create_button = ttk.Button(self.root, text='Create', width=5, style='myButton1.TButton', padding=[10], command=push_button)
         create_button.place(x=pos[0], y=pos[1])
 
-    def set_load_exel_button(self):
+    # def set_load_exel_button(self):
 
-        from reader import load_excel
+    #     from reader import load_excel
 
-        def push_button():
+    #     def push_button():
 
-            browse_file_search(self.var_path_config, self.var_path_dir_config)
-            model, launch, rocket, fuel = load_excel(self.var_path_config.get())
-            self.var_model.set(model)
+    #         browse_file_search(self.var_path_config, self.var_path_dir_config)
+    #         model, launch, rocket, fuel = load_excel(self.var_path_config.get())
+    #         self.var_model.set(model)
 
     def __convert_data(self):
         
@@ -276,13 +276,13 @@ def add_checkbutton(master, text, variable, row=0, col=0, command=None):
 
 def browse_file_search(var_path_file: tkinter.StringVar, var_path_dir: tkinter.StringVar):
 
-    path_file = filedialog.askopenfilename(initialdir='./')
+    path_file = filedialog.askopenfilename(initialdir='./', filetypes=[('エクセル形式ファイル', '*.xlsx')])
     var_path_file.set(path_file)
     var_path_dir.set(os.path.dirname(path_file))
 
-def browse_file(var_path_file: tkinter.StringVar, var_path_dir: tkinter.StringVar):
+def browse_file(var_path_file: tkinter.StringVar, var_path_dir: tkinter.StringVar, file_type=[('csv形式ファイル', '*.csv')]):
 
-    path_file = filedialog.askopenfilename(initialdir=var_path_dir.get())
+    path_file = filedialog.askopenfilename(initialdir=var_path_dir.get(), filetypes=file_type)
     var_path_file.set(path_file)
 
 def browse_folder(var_text: tkinter.StringVar, var_path_dir: tkinter.StringVar):
