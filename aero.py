@@ -154,7 +154,7 @@ class Aero():
 
         pd.DataFrame(data=data_aero, index=name_index, columns=name_column).to_csv(path + os.sep + 'aero_check.csv')
 
-    def plot(self, path):
+    def plot(self, ax: plt.Axes):
 
         x_nose_top = 0.
         x_nose_bot = self.l_nose
@@ -186,23 +186,16 @@ class Aero():
         x_nose_list = [x_fin_top, x_fin_1, x_fin_2, x_fin_bot]
         y_nose_list_up = [y_fin_top, y_fin_1, y_fin_2, y_fin_bot]
         y_nose_list_down = [- y for y in y_nose_list_up]
-
-        fig = plt.figure()
-        ax = fig.add_subplot(1,1,1)
+        
         ax.plot(x_list, y_list_up, color='black')
         ax.plot(x_list, y_list_down, color='black')
         ax.plot(x_nose_list, y_nose_list_down, color='black')
         ax.plot(x_nose_list, y_nose_list_up, color='black')
-        ax.scatter(self.Xcp, 0., marker='o', color='orangered', s=80, label='C.P.')
-        ax.scatter(self.Xcg, 0., marker='+', color='royalblue', s=80, label='C.G.')
-        ax.set_ylim(ymin=- 3.*y_fin_1, ymax=3.*y_fin_1)
-        # xmin, xmax = ax.get_xlim()
+        ax.set_ylim(ymin=- 3.5*y_fin_1, ymax=3.5*y_fin_1)
         ax.axhline(0.0, color='gray', linewidth=3, linestyle='--', alpha=0.3)
+        ax.scatter(self.Xcp, 0., marker='o', color='gold', s=80, label='C.P.(Barrowman-Method)')
         ax.set_aspect('equal')
         ax.grid()
-        ax.legend()
-        fig.set
-        fig.savefig(path + os.sep + 'rocket_outline.png', format="png", dpi=300)
 
 def __debug():
 

@@ -3,6 +3,7 @@ import json
 import os
 import numpy as np
 import shutil
+import matplotlib.pyplot as plt
 from aero import Aero
 
 def load_excel(path):
@@ -98,19 +99,19 @@ def __set_config(model_name, number_site, launch_data, rocket_data, fuel_data, w
     ###############################################################################################
     # Engine
     ###############################################################################################
-    lcg_fuel = rocket_data['燃料重心（後端から）'].to_numpy()[0] * 1.e-3
-    l_fuel = 2. * lcg_fuel
+    lcg_fuel   = rocket_data['燃料重心（後端から）'].to_numpy()[0] * 1.e-3
+    l_fuel     = 2. * lcg_fuel
     lcg_ox_bef = rocket_data['酸化剤重心（後端から）'].to_numpy()[0] * 1.e-3
-    ltank_end = rocket_data['タンク口金位置'].to_numpy()[0] * 1.e-3
-    l_tank = 2. * (lcg_ox_bef - ltank_end)
-    rho_ox =  800.0 # [kg/m3]
-    vol_tank = rocket_data['酸化剤質量'].to_numpy()[0] / rho_ox * 1.e6
-    d_tank = np.sqrt(vol_tank * 1.e-6 / l_tank / np.pi) * 2. * 1.e3
+    ltank_end  = rocket_data['タンク口金位置'].to_numpy()[0] * 1.e-3
+    l_tank     = 2. * (lcg_ox_bef - ltank_end)
+    rho_ox     =  800.0 # [kg/m3] 酸化剤質量密度
+    vol_tank   = rocket_data['酸化剤質量'].to_numpy()[0] / rho_ox * 1.e6
+    d_tank     = np.sqrt(vol_tank * 1.e-6 / l_tank / np.pi) * 2. * 1.e3
     d_out_fuel = d_tank
-    rho_fuel = 1.e3 # [kg/m3]
+    rho_fuel   = 1.e3 # [kg/m3] グレイン質量密度
     m_fuel_bef = fuel_data['燃焼前燃料質量'].to_numpy()[0]
     m_fuel_aft = fuel_data['燃焼後燃料質量'].to_numpy()[0]
-    d_in_fuel = d_out_fuel - np.sqrt(m_fuel_bef / (rho_fuel * 0.25 * np.pi)) * 1e3
+    d_in_fuel  = d_out_fuel - np.sqrt(m_fuel_bef / (rho_fuel * 0.25 * np.pi)) * 1e3
 
     thrust_file = path_result + os.sep + model_name + '_thrust.csv'
     shutil.copy(path_thrust, thrust_file)
@@ -144,7 +145,7 @@ def __set_config(model_name, number_site, launch_data, rocket_data, fuel_data, w
     json_config['Aero']['Roll Dumping Moment Coefficient Clp'] = rocket_data['ロール減衰モーメント係数'].to_numpy()[0]
     json_config['Aero']['Pitch Dumping Moment Coefficient Cmq'] = rocket_data['ピッチヨー減衰モーメント係数'].to_numpy()[0]
 
-    shappe_nose = rocket_data['ノーズ形状'].to_numpy()[0]
+    shape_nose  = rocket_data['ノーズ形状'].to_numpy()[0]
     l_nose      = rocket_data['ノーズ長さ'].to_numpy()[0] * 1.e-03
     offset_fin  = rocket_data['フィンオフセット長さ'].to_numpy()[0] * 1.e-03
     root_fin    = rocket_data['翼根コード長'].to_numpy()[0] * 1.e-03
@@ -152,9 +153,22 @@ def __set_config(model_name, number_site, launch_data, rocket_data, fuel_data, w
     leading_fin = rocket_data['翼前縁部後退長さ'].to_numpy()[0] * 1.e-03
     span_fin    = rocket_data['半スパン'].to_numpy()[0] * 1.e-03
     
-    __check_aero(path_result, length=json_config['Structure']['Length [m]'], diameter=json_config['Structure']['Diameter [m]'], Xcg=json_config['Structure']['Dry Length-C.G. from Nosetip [m]'],
-                 shape_nose=shappe_nose, l_nose=l_nose, offset_fin=offset_fin, root_fin=root_fin, tip_fin=tip_fin, leading_fin=leading_fin, span_fin=span_fin, 
-                 Xcp=json_config['Aero']['Constant Length-C.P. from Nosetip [m]'], CNa=json_config['Aero']['Constant CNa'], Cmq=json_config['Aero']['Pitch Dumping Moment Coefficient Cmq'], Clp=json_config['Aero']['Roll Dumping Moment Coefficient Clp'])
+    fig_rocket, ax_rocket \
+        = __check_aero(path_result, length=json_config['Structure']['Length [m]'], diameter=json_config['Structure']['Diameter [m]'], Xcg=json_config['Structure']['Dry Length-C.G. from Nosetip [m]'],
+                       shape_nose=shape_nose, l_nose=l_nose, offset_fin=offset_fin, root_fin=root_fin, tip_fin=tip_fin, leading_fin=leading_fin, span_fin=span_fin, 
+                       Xcp=json_config['Aero']['Constant Length-C.P. from Nosetip [m]'], CNa=json_config['Aero']['Constant CNa'], Cmq=json_config['Aero']['Pitch Dumping Moment Coefficient Cmq'], Clp=json_config['Aero']['Roll Dumping Moment Coefficient Clp'])
+
+    __add_engine_outline(ax_rocket,
+                         length_rocket=json_config['Structure']['Length [m]'],
+                         length_fuel=json_config['Engine']['Fuel Length [m]'],
+                         diam_fuel=json_config['Engine']['Fuel Outside Diameter [mm]']*1e-3,
+                         end_tank=json_config['Engine']['Length Tank-End from End [m]'], 
+                         length_tank=json_config['Engine']['Tank Length [m]'],
+                         diam_tank=json_config['Engine']['Tank Diameter [mm]']*1e-3)
+    ax_rocket.scatter(json_config['Aero']['Constant Length-C.P. from Nosetip [m]'], 0., marker='o', color='orangered', s=80, label='C.P.(User Input)')
+    ax_rocket.scatter(json_config['Structure']['Dry Length-C.G. from Nosetip [m]'], 0., marker='+', color='royalblue', s=80, label='C.G.')
+    ax_rocket.legend()
+    fig_rocket.savefig(path_result + os.sep + 'rocket_outline.png', format="png", dpi=300)
 
     ###############################################################################################
     # Payload
@@ -207,8 +221,37 @@ def __set_config(model_name, number_site, launch_data, rocket_data, fuel_data, w
 def __check_aero(path, length, diameter, Xcg, shape_nose, l_nose, offset_fin, root_fin, tip_fin, leading_fin, span_fin, Xcp, CNa, Cmq, Clp):
 
     aero = Aero(length, diameter, Xcg, shape_nose, l_nose, offset_fin, root_fin, tip_fin, leading_fin, span_fin, )
-    aero.plot(path)
     aero.output(path, Xcp, CNa, Cmq, Clp)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    aero.plot(ax)
+
+    return fig, ax
+
+def __add_engine_outline(ax: plt.Axes, length_rocket, length_fuel, diam_fuel, end_tank, length_tank, diam_tank):
+    
+    import matplotlib.patches as patches
+
+    x_end_fuel = length_rocket
+    x_top_fuel = length_rocket - length_fuel
+    x_end_tank = length_rocket - end_tank
+    x_top_tank = x_end_tank - length_tank
+    radius_fuel = 0.5 * diam_fuel
+    radius_tank = 0.5 * diam_tank
+
+    xlist_fuel = [x_top_fuel , x_end_fuel , x_end_fuel   , x_top_fuel   , x_top_fuel]
+    ylist_fuel = [radius_fuel, radius_fuel, - radius_fuel, - radius_fuel, radius_fuel]
+    xlist_tank = [x_top_tank , x_end_tank , x_end_tank   , x_top_tank   , x_top_tank]
+    ylist_tank = [radius_tank, radius_tank, - radius_tank, - radius_tank, radius_tank]
+
+    rect_fuel = patches.Rectangle(xy=(x_top_fuel, - radius_fuel), width=length_fuel, height=diam_fuel, fc='black')
+    rect_tank = patches.Rectangle(xy=(x_top_tank, - radius_tank), width=length_tank, height=diam_tank, fc='gray')
+
+    ax.plot(xlist_tank, ylist_tank, color='black')
+    ax.plot(xlist_fuel, ylist_fuel, color='gray', linestyle='--', linewidth=1)
+    ax.add_patch(rect_fuel)
+    ax.add_patch(rect_tank)
 
 def __input_path(type_file, surfix=''):
 
@@ -262,12 +305,26 @@ def __debug():
 
     print('STATUS: DEBUG')
 
-    path_src = __input_path('Config file Excel', '.xlsx')
-    path_thrust = __input_path('Thrust Data in csv', '.csv')
-    wind = __select_wind()
-    multi_cond = __get_multi_cond()
-    path_result = __input_path('Result Path')
-    site = input('Enter Launch Site: \n >> ')
+    # path_src = __input_path('Config file Excel', '.xlsx')
+    # path_thrust = __input_path('Thrust Data in csv', '.csv')
+    # path_result = __input_path('Result Path')
+    # site = input('Enter Launch Site: \n >> ')
+    # multi_cond = __get_multi_cond()
+    path_src = 'sample/sample_rocket.xlsx'
+    path_thrust = 'sample/thrust.csv'
+    wind = {}
+    wind['Wind File Exist'] = True
+    wind['Wind File'] = 'sample/thrust.csv'
+    wind['Wind Speed [m/s]'] = 3.
+    wind['Wind Azimuth [deg]'] = 0.
+    multi_cond = {}
+    multi_cond['Minimum Wind Speed [m/s]'] = 1.
+    multi_cond['Step Wind Speed [m/s]']    = 1.
+    multi_cond['Number of Wind Speed']     = 3
+    multi_cond['Number of Wind Azimuth']   = 4
+    multi_cond['Base Wind Azimuth [deg]']  = 0.
+    path_result = 'sample/work'
+    site = '1'
     model, launch, rocket, fuel = load_excel(path_src)
     __set_config(model, site, launch, rocket, fuel, wind, multi_cond, path_result, path_thrust)
 
