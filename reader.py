@@ -114,7 +114,9 @@ def __set_config(model_name, number_site, launch_data, rocket_data, fuel_data, w
     d_in_fuel  = d_out_fuel - np.sqrt(m_fuel_bef / (rho_fuel * 0.25 * np.pi)) * 1e3
 
     thrust_file = path_result + os.sep + model_name + '_thrust.csv'
-    shutil.copy(path_thrust, thrust_file)
+    data_thrust = np.loadtxt(path_thrust, delimiter=',', skiprows=1, usecols=(0, 1))
+    np.savetxt(thrust_file, data_thrust, delimiter=',', fmt='%.3e', comments='', header='time, thrust')
+    # shutil.copy(path_thrust, thrust_file)
     
     json_config['Engine'] = {}
     json_config['Engine']['Thrust Curve'] = thrust_file
@@ -314,7 +316,7 @@ def __debug():
     path_thrust = 'sample/thrust.csv'
     wind = {}
     wind['Wind File Exist'] = True
-    wind['Wind File'] = 'sample/thrust.csv'
+    wind['Wind File'] = 'sample/wind.csv'
     wind['Wind Speed [m/s]'] = 3.
     wind['Wind Azimuth [deg]'] = 0.
     multi_cond = {}
